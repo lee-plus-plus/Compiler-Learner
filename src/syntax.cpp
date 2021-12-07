@@ -96,13 +96,13 @@ namespace compiler {
 		return pair<DFAedges, map<int, int>>(coversEdges, coversFinalities);
 	}
 
-	vector<Token> getTokens(DFAedges dfa, map<int, int> dfaFinalities, char *src, int length)
+	vector<Token> getTokens(DFAedges dfa, map<int, int> dfaFinalities, const string &src)
 	{
 		vector<Token> tokens;
 		int st = 0;
 		int state = 0;
 
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i < src.size(); i++) {
 			int c = src[i];
 			int nextState = dfa[state][c];
 
@@ -124,7 +124,7 @@ namespace compiler {
 		if (dfaFinalities.count(state)) {
 			// 匹配一个token
 			int type = dfaFinalities[state];
-			tokens.push_back({type, st, length});
+			tokens.push_back({type, st, (int)src.size()});
 		} else {			throw "syntax error";
 		}
 

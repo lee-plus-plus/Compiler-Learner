@@ -3,6 +3,11 @@ using namespace std;
 
 namespace compiler {
 
+	bool isTerminal(int charIdx)
+	{
+		return (0 <= charIdx && charIdx < CHARSET_SIZE);
+	}
+
 	void printCovers(vector<set<int>> covers)
 	{
 		printf("covers:{ \n");
@@ -190,20 +195,86 @@ namespace compiler {
 		printf("}\n");
 	}
 
-	void printStr(char *src, int st, int ed)
+	void printSubStr(const string &src, int st, int ed)
 	{
 		for (int i = st; i < ed; i++) {
 			printf("%c", src[i]);
 		}
 	}
 
-	void printTokens(vector<Token> tokens, char *src)
+	void printTokens(vector<Token> tokens, const string &src)
 	{
 		printf("tokens:{\n");
 		for (Token token : tokens) {
 			printf("\t<%d> {[%d,%d]: '", token.type, token.st, token.ed - 1);
-			printStr(src, token.st, token.ed);
+			printSubStr(src, token.st, token.ed);
 			printf("'}\n");
+		}
+		printf("}\n");
+	}
+
+	void printSymbol(int charIdx)
+	{
+		if (isTerminal(charIdx)) {
+			printf("%c", charIdx);
+		} else {
+			printf("\e[0;36m""%c""\e[0m", charIdx - CHARSET_SIZE);
+		}
+		// printf("%d", charIdx);
+	}
+
+	void printProduction(Production prod)
+	{	
+		printSymbol(prod.symbol);
+		printf(" -> ");
+		for (int i = 0; i < prod.right.size(); i++) {
+			printSymbol(prod.right[i]);
+		}
+		printf("\n");
+	}
+
+	void printProductionItem(ProductionItem prodItem)
+	{	
+		printSymbol(prodItem.symbol);
+		printf(" -> ");
+		for (int i = 0; i < prodItem.right.size(); i++) {
+			if (i == prodItem.dot) {
+				printf("·");
+			}
+			printSymbol(prodItem.right[i]);
+		}
+		if (prodItem.dot == prodItem.right.size()) {
+			printf("·");
+		}
+		printf("\n");
+	}
+
+	void printProductionLR1Item(ProductionLR1Item prodItem)
+	{	
+		printSymbol(prodItem.symbol);
+		printf(" -> ");
+		for (int i = 0; i < prodItem.right.size(); i++) {
+			if (i == prodItem.dot) {
+				printf("·");
+			}
+			printSymbol(prodItem.right[i]);
+		}
+		if (prodItem.dot == prodItem.right.size()) {
+			printf("·");
+		}
+		printf(", ");
+		printSymbol(prodItem.search);
+		printf("\n");
+	}
+
+
+	void printProductions(vector<Production> productions)
+	{
+		printf("prod:{\n");
+		int i = 0;
+		for (Production prod : productions) {
+			printf("\t(%d) ", i++);
+			printProduction(prod);
 		}
 		printf("}\n");
 	}

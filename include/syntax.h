@@ -10,7 +10,7 @@ namespace compiler {
 	pair<DFAedges, map<int, int>> getDFAintegrated(vector<DFAedges> dfas, vector<set<int>> dfaFinalities);
 
 	// 获取tokens
-	vector<Token> getTokens(DFAedges dfa, map<int, int> dfaFinalities, char *src, int length);
+	vector<Token> getTokens(DFAedges dfa, map<int, int> dfaFinalities, const string &src);
 
 }
 

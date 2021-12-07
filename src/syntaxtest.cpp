@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cstring>
+#include <string>
 #include "nfa2dfa.h"
 #include "re2nfa.h"
 #include "syntax.h"
@@ -11,16 +11,12 @@ void testSyntaxAnalyze()
 {
 	const int N = 3;
 	// 输入N个正则表达式
-	char *re[N];
-	size_t n[N];
-	int len[N];
+	string re[N];
 
 	for (int i = 0; i < N; i++) {
 		printf("Regular Expression %d: ", i);
-		re[i] = NULL;
-		len[i] = getline(&re[i], &n[i], stdin);
-		re[i][--len[i]] = '\0';
-		printf("RE[%d] == \"%s\"\n", i, re[i]);
+		getline(cin, re[i]);
+		printf("RE[%d] == \"%s\"\n", i, re[i].c_str());
 	}
 
 	// 正则表达式转DFA
@@ -29,7 +25,7 @@ void testSyntaxAnalyze()
 	for (int i = 0; i < N; i++) {
 		int numStates;
 		// rez转nfa
-		EdgeTable edgeTable = re2nfa(re[i], strlen(re[i]), numStates);
+		EdgeTable edgeTable = re2nfa(re[i], re[i].size(), numStates);
 		NFAedges nfaEdges = edgeTable2NFAedges(numStates, edgeTable);
 		// nfa转dfa
 		auto result = nfa2dfa(nfaEdges, {1});
@@ -53,13 +49,11 @@ void testSyntaxAnalyze()
 	// 用合并后的DFA提取字符串tokens
 	printf("Get tokens:\n");
 	while (true) {
-		char *src = NULL;
-		size_t m;
-		int srcLen = getline(&src, &m, stdin);
-		src[--srcLen] = '\0';
+		string src;
+		getline(cin, src);
 
 		vector<Token> tokens;
-		tokens = getTokens(dfai, dfaiFinities, src, srcLen);
+		tokens = getTokens(dfai, dfaiFinities, src);
 
 		printTokens(tokens, src);	
 	}
