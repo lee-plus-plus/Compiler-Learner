@@ -125,6 +125,19 @@ namespace compiler {
 		}
 	};
 
+	// lr(1) 分析表动作
+	struct Action {
+		enum TYPE {ACTION, REDUCE, GOTO, ACCEPT};
+		TYPE type;
+		int tgt;
+	};
+
+	// 语法树节点
+	struct GrammarNode {
+		vector<GrammarNode *> children;
+		int symbol;
+	};
+
 	// 是否为终结符(否则为非终结符)
 	bool isTerminal(int charIdx);
 

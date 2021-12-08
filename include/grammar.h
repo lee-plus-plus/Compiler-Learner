@@ -17,6 +17,11 @@ namespace compiler {
 	pair<vector<set<ProductionLR1Item>>, EdgeTable> getLR1dfa(set<int> symbolset, vector<Production> prods);
 	void setLR1CoverExpanded(set<ProductionLR1Item> &cover, map<int, set<int>> firstSet, vector<Production> prods);
 
+	// LR(1) analyze table
+	map<pair<int, int>, Action> getLR1table(vector<Production> prods, vector<set<ProductionLR1Item>> covers, EdgeTable edgeTable);
+
+	// LR(1) analyze, return grammar tree
+	GrammarNode *getLR1grammarTree(vector<Production> prods, map<pair<int, int>, Action> analyzeTable, string src);
 
 };
 

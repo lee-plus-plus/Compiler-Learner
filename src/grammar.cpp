@@ -1,6 +1,7 @@
 #include "grammar.h"
 #include "nfa2dfa.h"
 #include <algorithm>
+#include <stack>
 using namespace std;
 
 namespace compiler {
@@ -279,6 +280,135 @@ namespace compiler {
 				}
 			}
 		}
+	}
+
+	// LR(1) analyze table
+	map<pair<int, int>, Action> getLR1table(vector<Production> prods, vector<set<ProductionLR1Item>> covers, EdgeTable edgeTable)
+	{
+		map<pair<int, int>, Action> analyzeTable;
+
+		// edges ==> ACTION and GOTO
+		for (Edge edge : edgeTable) {
+			if (isTerminal(edge.eChar)) {
+				// s1 ——a-> s2 ==> action[s1, a] = s2
+				analyzeTable[{edge.from, edge.eChar}] = {Action::ACTION, edge.to};
+			} else {
+				// s1 ——A-> s2 ==> goto[s1, A] = s2
+				analyzeTable[{edge.from, edge.eChar}] = {Action::GOTO, edge.to};
+			}
+		}
+
+		// node ==> REDUCE and ACCEPT
+		for (int i = 0; i < covers.size(); i++) {
+			for (ProductionLR1Item item : covers[i]) {
+				// s1: (A -> ...·, s), r2: A -> ... ==> reduce[s1, s] = r2
+				if (item.dot == item.right.size()) {
+					for (int j = 0; j < prods.size(); j++) {
+						if (prods[j].symbol == item.symbol && prods[j].right == item.right) {
+							analyzeTable[{i, item.search}] = {Action::REDUCE, j};
+							break;
+						}
+					}
+				}
+				// s1: (S -> ...·, #) ==> accept[s1, #]
+				if (item.symbol == prods[0].symbol && item.dot == item.right.size()) {
+					analyzeTable[{i, item.search}] = {Action::ACCEPT, 0};
+				}
+			}
+		}
+
+		return analyzeTable;
+	}
+
+	// LR(1) analyze, return grammar tree
+	GrammarNode *getLR1grammarTree(vector<Production> prods, map<pair<int, int>, Action> analyzeTable, string src)
+	{
+		if (src[src.size() - 1] != END_CHAR) {
+			src += END_CHAR;
+		}
+
+		// stack of states
+		stack<int> states;
+		stack<GrammarNode *> stateNodes;
+		states.push(0);
+
+		// stack of symbols (unnecessary)
+		stack<int> symbols;
+
+
+		for (int i = 0; ; ) {
+			// print stack
+			{
+				stack<int> tempSymbols;
+				printf("s=%d \tnext=%c \t", states.top(), src[i]);
+				while (symbols.size()) {
+					tempSymbols.push(symbols.top());
+					symbols.pop();
+				}
+				while (tempSymbols.size()) {
+					symbols.push(tempSymbols.top());
+					printSymbol(tempSymbols.top());
+					tempSymbols.pop();
+				}
+				printf("\n");
+			}
+
+			// look src[i], state => next_state, action
+			bool isError =  analyzeTable.count({states.top(), src[i]}) == 0;
+			if (isError) {
+				ERR_LOG("syntax error: unexpected symbol '%c'\n", src[i]);
+			}
+
+			Action action = analyzeTable[{states.top(), src[i]}];
+			switch (action.type) {
+				case Action::ACTION: {
+					symbols.push(src[i]);
+					states.push(action.tgt);
+					stateNodes.push(new GrammarNode({{}, src[i]}));
+					i++;
+					break;
+				}
+				case Action::REDUCE: {
+					Production r = prods[action.tgt];
+					stack<GrammarNode *> temp;
+					for (int j = 0; j < r.right.size(); j++) {
+						temp.push(stateNodes.top());
+						symbols.pop();
+						states.pop();
+						stateNodes.pop();
+					}
+
+					bool isError2 =  analyzeTable.count({states.top(), r.symbol}) == 0;
+					if (isError2) {
+						ERR_LOG(
+							"syntax error: unexpected symbol '\e[0;36m%c\e[0m'\n", 
+							r.symbol - CHARSET_SIZE
+						);
+					}
+					Action action2 = analyzeTable[{states.top(), r.symbol}];
+					symbols.push(r.symbol);
+					states.push(action2.tgt);
+
+					GrammarNode *nextNode = new GrammarNode({{}, r.symbol});
+					while (temp.size()) {
+						nextNode->children.push_back(temp.top());
+						temp.pop();
+					}
+					stateNodes.push(nextNode);
+					break;
+				}
+				case Action::ACCEPT: {
+					break;
+				}
+				default: {
+					ERR_LOG("syntax error: unexpected symbol '%c'\n", src[i]);
+					break;
+				}
+			}				
+
+		}
+
+		return stateNodes.top();
 	}
 
 }

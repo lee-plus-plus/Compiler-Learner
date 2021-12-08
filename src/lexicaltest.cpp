@@ -148,10 +148,84 @@ void testLR1()
 	}
 }
 
+void dlrVisit(GrammarNode *node, int level = 0)
+{
+	for (int i = 0; i < level; i++) {
+		printf("  ");
+	}
+	printSymbol(node->symbol);
+	printf("\n");
+	for (GrammarNode *child : node->children) {
+		dlrVisit(child, level + 1);
+	}
+}
+
+void testLR1analyzeTable()
+{
+	// initialize symbolset and grammar
+	auto result = getNewGrammar({
+		"Q -> S", 
+		"S -> L=R", 
+		"S -> R", 
+		"L -> *R", 
+		"L -> i", 
+		"R -> L", 
+	});
+	set<int> symbolset = result.first;
+	vector<Production> productions = result.second;
+	printProductions(productions);
+
+	auto result2 = getLR1dfa(symbolset, productions);
+	vector<set<ProductionLR1Item>> covers = result2.first;
+	EdgeTable edgeTable = result2.second;
+
+	// print covers
+	printf("covers: \n");
+	for (int i = 0; i < covers.size(); i++) {
+		printf("%d: \n", i);
+		for (ProductionLR1Item prod : covers[i]) {
+			printProductionLR1Item(prod);
+		}
+	}
+
+	// print edge table
+	printf("edge table: \n");
+	for (Edge edge : edgeTable) {
+		printf("%d ", edge.from);
+		printSymbol(edge.eChar);
+		printf(" %d\n", edge.to);
+	}
+
+	map<pair<int, int>, Action> analyzeTable;
+	analyzeTable = getLR1table(productions, covers, edgeTable);
+
+	string typeName[] = {"ACTION", "REDUCE", "GOTO  ", "ACCEPT"};
+	printf("analyze table: \n");
+	for (auto elem : analyzeTable) {
+		printf("%d ", elem.first.first);
+		printSymbol(elem.first.second);
+		printf(" %s %d\n", typeName[elem.second.type].c_str(), elem.second.tgt);
+	}
+
+	string src = "i=*i=";
+	printf("input: \n");
+	for (int i = 0; i < src.size(); i++) {
+		printSymbol(src[i]);
+	}
+	printf("\n");
+
+	GrammarNode *rootNode;
+	printf("grammar tree:\n");
+	rootNode = getLR1grammarTree(productions, analyzeTable, src);
+	dlrVisit(rootNode);
+
+}
+
 int main(int argc, char **argv)
 {
 	// testFirstSetAndFollowSet();
-	testLR1();
+	// testLR1();
+	testLR1analyzeTable();
 
 	return 0;
 	

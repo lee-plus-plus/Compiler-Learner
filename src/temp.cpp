@@ -3,14 +3,15 @@
 #include <set>
 using namespace std;
 
+
 int main()
 {
-	map<int, set<int>> s;
-	s[0] = ({0});
+	map<int, int> a;
+	a[3] = 5;
 
-	for (int i : s[0]) {
-		cout << i << " ";
-	}
+	// int x = a[1];
+	printf("%d\n", a.count(5));
+
 
 	return 0;
 }
