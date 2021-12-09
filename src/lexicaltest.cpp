@@ -202,7 +202,7 @@ void testLR1analyzeTable()
 	string typeName[] = {"ACTION", "REDUCE", "GOTO  ", "ACCEPT"};
 	printf("analyze table: \n");
 	for (auto elem : analyzeTable) {
-		printf("%d ", elem.first.first);
+		printf("%2d ", elem.first.first);
 		printSymbol(elem.first.second);
 		printf(" %s %d\n", typeName[elem.second.type].c_str(), elem.second.tgt);
 	}
