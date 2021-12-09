@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
-#include "nfa2dfa.h"
-#include "re2nfa.h"
+// #include "nfa2dfa.h"
+// #include "re2nfa.h"
 #include "syntax.h"
 using namespace std;
 using namespace compiler;

@@ -17,6 +17,8 @@ namespace compiler {
 	pair<vector<set<ProductionLR1Item>>, EdgeTable> getLR1dfa(set<int> symbolset, vector<Production> prods);
 	void setLR1CoverExpanded(set<ProductionLR1Item> &cover, map<int, set<int>> firstSet, vector<Production> prods);
 
+	pair<vector<Production>, map<int, int>> getLeftRecursiveReducedGrammar();
+
 	// LR(1) analyze table
 	map<pair<int, int>, Action> getLR1table(vector<Production> prods, vector<set<ProductionLR1Item>> covers, EdgeTable edgeTable);
 

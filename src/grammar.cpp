@@ -336,7 +336,7 @@ namespace compiler {
 		stack<int> symbols;
 
 
-		for (int i = 0; ; ) {
+		for (int i = 0, flag = true; flag; ) {
 			// print stack
 			{
 				stack<int> tempSymbols;
@@ -398,6 +398,7 @@ namespace compiler {
 					break;
 				}
 				case Action::ACCEPT: {
+					flag = false;
 					break;
 				}
 				default: {

@@ -164,12 +164,11 @@ void testLR1analyzeTable()
 {
 	// initialize symbolset and grammar
 	auto result = getNewGrammar({
-		"Q -> S", 
-		"S -> L=R", 
-		"S -> R", 
-		"L -> *R", 
-		"L -> i", 
-		"R -> L", 
+		"Q -> E", 
+		"E -> E+E", 
+		"E -> E*E", 
+		"E -> (E)", 
+		"E -> i", 
 	});
 	set<int> symbolset = result.first;
 	vector<Production> productions = result.second;
@@ -207,7 +206,7 @@ void testLR1analyzeTable()
 		printf(" %s %d\n", typeName[elem.second.type].c_str(), elem.second.tgt);
 	}
 
-	string src = "i=*i=";
+	string src = "i*i+(i+i*i)";
 	printf("input: \n");
 	for (int i = 0; i < src.size(); i++) {
 		printSymbol(src[i]);
