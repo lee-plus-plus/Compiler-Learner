@@ -11,9 +11,9 @@ namespace compiler {
 		} else if (isTerminal(symbol)) {
 			result += symbol;
 		} else {
-			result += "[0;36m";
+			result += T_BLUE;
 			result += toTerminal(symbol);
-			result += "\e[0m";
+			result += T_NONE;
 		}
 		return result.c_str();
 	}
@@ -76,6 +76,16 @@ namespace compiler {
 		return visited.size();
 	}
 
+	void printCover(set<int> cover)
+	{
+		auto it = cover.begin();
+		printf("{s%d", *it);
+		for (it++; it != cover.end(); it++) {
+			printf(", s%d", *it);
+		}
+		printf("}\n");
+	}
+
 	void printEdgeTable(EdgeTable edgeTable)
 	{
 		printf("edge table: \n");
@@ -100,13 +110,17 @@ namespace compiler {
 		}
 		printf("\n");
 		for (const auto &elem : finality) {
-			printf("s%d:\t", elem.first);
+			const int &state = elem.first;
+			printf("s%d:\t", state);
 			for (int symbol : symbolset) {
-				if (dfa[elem.first].count(symbol)) {
-					printf("s%d\t", dfa[elem.first][symbol]);
+				if (dfa[state].count(symbol)) {
+					printf("s%d\t", dfa[state][symbol]);
 				} else {
 					printf("\t");
 				}
+			}
+			if (finality[state] != 0) {
+				printf(T_GREEN "*%d" T_NONE, finality[state]);
 			}
 			printf("\n");
 		}
@@ -128,18 +142,22 @@ namespace compiler {
 		}
 		printf("\n");
 		for (const auto &elem : finality) {
-			printf("s%d:\t", elem.first);
+			const int &state = elem.first;
+			printf("s%d:\t", state);
 			for (int symbol : symbolset) {
-				if (nfa[elem.first].count(symbol)) {
-					auto it = nfa[elem.first].lower_bound(symbol);
+				if (nfa[state].count(symbol)) {
+					auto it = nfa[state].lower_bound(symbol);
 					printf("s%d", it->second);
-					for (it++; it != nfa[elem.first].upper_bound(symbol); it++) {
+					for (it++; it != nfa[state].upper_bound(symbol); it++) {
 						printf(",s%d", it->second);
 					}
 					printf("\t");
 				} else {
 					printf("\t");
 				}
+			}
+			if (finality[state] != 0) {
+				printf(T_GREEN "*%d" T_NONE, finality[state]);
 			}
 			printf("\n");
 		}

@@ -17,6 +17,7 @@ namespace compiler {
 	// 获取状态数量
 	int getNumStates(DFAgraph dfa);
 
+	void printCover(set<int> cover);
 	void printEdgeTable(EdgeTable edgeTable);
 	void printDFAgraph(DFAgraph dfa, map<int, int> finality);
 	void printNFAgraph(NFAgraph nfa, map<int, int> finality);
