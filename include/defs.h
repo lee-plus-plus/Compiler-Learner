@@ -54,29 +54,30 @@ namespace compiler {
 	struct Production {
 		int symbol;			// left, nonterminal symbol
 		vector<int> right;	// mixed with nonterminals and terminals
-		Production(symbol, right): 
+		Production(int symbol, vector<int> right): 
 			symbol(symbol), right(right) {};
-		bool operator<(const Production &p);
-		bool operator==(const Production &p);
+
+		bool operator<(const Production &p) const;
+		bool operator==(const Production &p) const;
 	};
 
 	// 产生式项目 (P -> A·b)
 	struct ProductionItem : Production {
 		int dot;			// position of dot (0 ~ right.size())
-		ProductionItem(symbol, right, dot): 
+		ProductionItem(int symbol, vector<int>right, int dot): 
 			Production(symbol, right), dot(dot) {};
-		bool operator<(const ProductionItem &p);
-		bool operator==(const ProductionItem &p);
+		bool operator<(const ProductionItem &p) const;
+		bool operator==(const ProductionItem &p) const;
 	};
 
 	// LR1产生式项目 (P -> A·b, a)
 	struct ProductionLR1Item : ProductionItem {
 		int search;			// search symbol (terminal)
-		ProductionLR1Item(symbol, right, dot, search):
+		ProductionLR1Item(int symbol, vector<int>right, int dot, int search):
 			ProductionItem(symbol, right, dot), search(search) {};
 
-		bool operator<(const ProductionLR1Item &p);
-		bool operator==(const ProductionLR1Item &p);
+		bool operator<(const ProductionLR1Item &p) const;
+		bool operator==(const ProductionLR1Item &p) const;
 
 		// bool operator<(const ProductionLR1Item &p) const {
 		// 	if (symbol < p.symbol) {
@@ -114,6 +115,25 @@ namespace compiler {
 		vector<GrammarNode *> children;
 		int symbol;
 	};
+
+	inline int toNonterminal(int symbol)
+	{
+		return isNonterminal(symbol) ? symbol : symbol + CHARSET_SIZE;
+	}
+	inline int toTerminal(int symbol)
+	{
+		return isTerminal(symbol) ? symbol : symbol - CHARSET_SIZE;
+	}
+
+	inline bool isTerminal(int symbol)
+	{
+		return (0 <= symbol && symbol < CHARSET_SIZE);
+	}
+
+	inline bool isNonterminal(int symbol)
+	{
+		return (symbol >= CHARSET_SIZE);
+	}
 
 }
 

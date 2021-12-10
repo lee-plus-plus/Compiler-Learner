@@ -3,10 +3,12 @@ using namespace std;
 
 namespace compiler {
 
-	char *symbolStr(int symbol)
+	const char *symbolStr(int symbol)
 	{
 		string result;
-		if (isTerminal(symbol)) {
+		if (symbol == EMPTY_CHAR) {
+			result += "ε";
+		} else if (isTerminal(symbol)) {
 			result += symbol;
 		} else {
 			result += "[0;36m";
@@ -17,27 +19,24 @@ namespace compiler {
 	}
 
 	// 邻接表转NFA分析表
-	NFAtable toNFAtable(EdgeTable edgeTable)
+	NFAgraph toNFAgraph(EdgeTable edgeTable)
 	{
-		NFAtable nfaTable;
+		NFAgraph nfa;
 		for (const Edge &edge : edgeTable) {
-			if (nfaTable.count({{edge.from, edge.symbol}}) == 0) {
-				nfaTable.insert({{edge.from, edge.symbol}, {edge.to}});
-			} else {
-				nfaTable[{edge.from, edge.symbol}].push_back(edge.to);
-			}
+			nfa[edge.from].insert({edge.symbol, edge.to});
 		}
-		return nfaTable;
+		return nfa;
 	}
 
+
 	// 邻接表转DFA分析表
-	DFAtable toDFAtable(EdgeTable edgeTable)
+	DFAgraph toDFAgraph(EdgeTable edgeTable)
 	{
-		DFAtable dfaTable;
+		DFAgraph dfa;
 		for (const Edge &edge : edgeTable) {
-			dfaTable.insert({{edge.from, edge.symbol}, edge.to});
+			dfa[edge.from][edge.symbol] = edge.to;
 		}
-		return dfaTable;
+		return dfa;
 	}
 
 	// DFA分析表转邻接表
@@ -45,7 +44,7 @@ namespace compiler {
 	{
 		EdgeTable edgeTable;
 		for (const auto &node : dfa) {
-			for (const autp &edge : node.second) {
+			for (const auto &edge : node.second) {
 				edgeTable.push_back({edge.first, node.first, edge.second});
 			}
 		}
@@ -77,6 +76,76 @@ namespace compiler {
 		return visited.size();
 	}
 
+	void printEdgeTable(EdgeTable edgeTable)
+	{
+		printf("edge table: \n");
+		for (const Edge &edge : edgeTable) {
+			printf("s%-2d --> %s --> s%-2d\n", edge.from, symbolStr(edge.symbol), edge.to);
+		}
+	}
+
+	void printDFAgraph(DFAgraph dfa, map<int, int> finality)
+	{
+		set<int> symbolset;
+		for (const auto &node : dfa) {
+			for (const auto &edge : node.second) {
+				symbolset.insert(edge.first);
+			}
+		}
+
+		printf("DFA graph: \n");
+		printf("\t");
+		for (int symbol : symbolset) {
+			printf("%s\t", symbolStr(symbol));
+		}
+		printf("\n");
+		for (const auto &elem : finality) {
+			printf("s%d:\t", elem.first);
+			for (int symbol : symbolset) {
+				if (dfa[elem.first].count(symbol)) {
+					printf("s%d\t", dfa[elem.first][symbol]);
+				} else {
+					printf("\t");
+				}
+			}
+			printf("\n");
+		}
+	}
+
+	void printNFAgraph(NFAgraph nfa, map<int, int> finality)
+	{
+		set<int> symbolset;
+		for (const auto &node : nfa) {
+			for (const auto &edge : node.second) {
+				symbolset.insert(edge.first);
+			}
+		}
+
+		printf("NFA graph: \n");
+		printf("\t");
+		for (int symbol : symbolset) {
+			printf("%s\t", symbolStr(symbol));
+		}
+		printf("\n");
+		for (const auto &elem : finality) {
+			printf("s%d:\t", elem.first);
+			for (int symbol : symbolset) {
+				if (nfa[elem.first].count(symbol)) {
+					auto it = nfa[elem.first].lower_bound(symbol);
+					printf("s%d", it->second);
+					for (it++; it != nfa[elem.first].upper_bound(symbol); it++) {
+						printf(",s%d", it->second);
+					}
+					printf("\t");
+				} else {
+					printf("\t");
+				}
+			}
+			printf("\n");
+		}
+	}
+
+/*
 	// void printProduction(Production prod)
 	// {	
 	// 	printSymbol(prod.symbol);
@@ -132,4 +201,5 @@ namespace compiler {
 	// 	}
 	// 	printf("}\n");
 	// }
+	*/
 }

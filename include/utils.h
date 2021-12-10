@@ -5,7 +5,7 @@
 namespace compiler {
 
 	// 符号转字符串
-	char *symbolStr(int symbol);
+	const char *symbolStr(int symbol);
 
 	// 邻接表转NFA分析表
 	NFAgraph toNFAgraph(EdgeTable edgeTable);
@@ -18,11 +18,13 @@ namespace compiler {
 	int getNumStates(DFAgraph dfa);
 
 	void printEdgeTable(EdgeTable edgeTable);
+	void printDFAgraph(DFAgraph dfa, map<int, int> finality);
+	void printNFAgraph(NFAgraph nfa, map<int, int> finality);
 	
-	void printProduction(Production production);
-	void printProductionItem(ProductionItem prodItem);
-	void printProductionLR1Item(ProductionLR1Item prodItem);
-	void printProductions(vector<Production> productions);
+	// void printProduction(Production production);
+	// void printProductionItem(ProductionItem prodItem);
+	// void printProductionLR1Item(ProductionLR1Item prodItem);
+	// void printProductions(vector<Production> productions);
 }
 
 

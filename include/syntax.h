@@ -1,14 +1,13 @@
 #ifndef SYNTAX_H
 #define SYNTAX_H
 #include "defs.h"
-#include "nfa2dfa.h"
 using namespace std;
 
 namespace compiler {
 
 	// NFA转DFA（未最小化）
 	// return: dfa, dfaNode-nfaNodes映射关系
-	pair<DFAgraph, multiset<int, int>> nfa2dfa(NFAgraph nfa, map<int, int> finality);
+	pair<DFAgraph, multimap<int, int>> nfa2dfa(NFAgraph nfa, map<int, int> finality);
 	// 最小化DFA
 	pair<DFAgraph, map<int, int>> getMinimizedDfa(DFAgraph dfa, map<int, int> finality);
 
@@ -20,10 +19,10 @@ namespace compiler {
 	// 扩张覆盖片选择（epsilon-闭包法）
 	void setCoverExpanded(set<int> &cover, NFAgraph nfa);
 	// 求后继覆盖片
-	set<int> getNextCover(set<int> cover, NFAgraph nfa, int charIdx);
+	map<int, set<int>> getNextCovers(set<int> cover, NFAgraph nfa);
 	
 	// RE转NFA邻接表
-	EdgeTable re2nfa(const string &re, int &numStates);
+	NFAgraph re2nfa(const string &re, int &numStates);
 
 	void splitReByMid(const string &re, int st, int ed, int &numStates, EdgeTable &edges, int stState, int edState);
 	void splitReByParen(const string &re, int st, int ed, int &numStates, EdgeTable &edges, int stState, int edState);

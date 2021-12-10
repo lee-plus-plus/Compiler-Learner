@@ -4,9 +4,10 @@
 using namespace std;
 
 namespace compiler {
+	
 	// NFA转DFA（未最小化）
 	// return: dfa, dfaNode-nfaNodes映射关系
-	pair<DFAgraph, multiset<int, int>> nfa2dfa(NFAgraph nfa, map<int, int> finality)
+	pair<DFAgraph, multimap<int, int>> nfa2dfa(NFAgraph nfa, map<int, int> finality)
 	{
 		vector<set<int>> covers;	// dfa节点对原nfa节点的映射
 		DFAgraph dfa;
@@ -14,7 +15,7 @@ namespace compiler {
 		// 构造初始覆盖片
 		set<int> initCover({0});
 		setCoverExpanded(initCover, nfa);
-		covers.push_back(initCover)
+		covers.push_back(initCover);
 
 		// bfs, 产生新覆盖片
 		for (int coverIdx = 0; (size_t)coverIdx < covers.size(); coverIdx++) {
@@ -27,17 +28,16 @@ namespace compiler {
 				}
 			}
 			// 对覆盖片步进，产生新覆盖片
-			for (int symbol : nextSymbols) {
-				if (symbol == EMPTY_CHAR)
-					continue;
-				set<int> nextCover = getNextCover(cover, nfa, symbol);
-				if (nextCover.size() == 0) {
-					assert(false);
+			map<int, set<int>> nextCovers = getNextCovers(cover, nfa);
+			for (const auto &elem : nextCovers) {
+				int symbol = elem.first;
+				set<int> nextCover = elem.second;
+				if (symbol == EMPTY_CHAR) {
 					continue;
 				}
-
+				// 为覆盖片分配下一个idx，加入
 				auto it = find(covers.begin(), covers.end(), nextCover);
-				int nextCoverIdx = (int)(it - covers.begin()); // 为覆盖片分配下一个idx
+				int nextCoverIdx = (int)(it - covers.begin()); 
 				if ((size_t)nextCoverIdx == covers.size()) {
 					covers.push_back(nextCover); // 无重复, 先生成新覆盖片
 				}
@@ -46,7 +46,7 @@ namespace compiler {
 		}
 
 		// 格式转换, covers -> coverMap
-		multiset<int, int> coverMap;
+		multimap<int, int> coverMap;
 		for (int coverIdx = 0; (size_t)coverIdx < covers.size(); coverIdx++) {
 			for (int nfaState : covers[coverIdx]) {
 				coverMap.insert({coverIdx, nfaState});
@@ -55,7 +55,7 @@ namespace compiler {
 
 		return make_pair(dfa, coverMap);
 	}
-
+	
 	// 最小化DFA
 	pair<DFAgraph, map<int, int>> getMinimizedDfa(DFAgraph dfa, map<int, int> finality)
 	{
@@ -65,14 +65,14 @@ namespace compiler {
 		return result1;
 		// return getEmptyStatesEliminatedDfa(result1.first, result1.second);
 	}
-
+	
 	// 消除DFA不可达状态, 并整理DFA状态数字至0 ~ numStates-1
 	pair<DFAgraph, map<int, int>> getEmptyStatesEliminatedDfa(DFAgraph dfa, map<int, int> finality)
 	{
 		DFAgraph resDfa;
 		map<int, int> resFinality;
 		vector<int> idState({0});
-		map<int> stateId({0, 0});
+		map<int, int> stateId({{0, 0}});
 
 		// bfs
 		for (int id = 0; id < idState.size(); id++) {
@@ -92,7 +92,8 @@ namespace compiler {
 		
 		return make_pair(resDfa, resFinality);
 	}
-
+	
+	
 	// 合并DFA等价状态
 	pair<DFAgraph, map<int, int>> getEqualStatesCombinedDfa(DFAgraph dfa, map<int, int> finality)
 	{
@@ -100,17 +101,18 @@ namespace compiler {
 		// 用不同的整数(id)染色,区分集合划分
 		// 按可终结属性值的不同进行初次划分
 		map<int, int> stateId = finality;
-		multimap<int, int> idStates;
+		map<int, set<int>> idStates;
 		for (const auto &elem : stateId) {
-			idStates.insert({stateId[elem.first], elem.second})
+			idStates[stateId[elem.first]].insert(elem.second);
 		}
 		int nextId;
-		for (nextId = 0; assignedId.count(nextId) != 0; nextId++);
+		for (nextId = 0; idStates.count(nextId) != 0; nextId++) {}
 
 		// 获取该状态的后继集染色情况, 用于比较两状态后继集染色差异
-		auto getNodesWithId = [stateId](DFAnode &node) -> DFAnode { 
-			for (auto it = node.begin(); it != node.end; it++)
+		auto getNodeWithId = [&stateId](DFAnode &node) -> DFAnode { 
+			for (auto it = node.begin(); it != node.end(); it++) {
 				it->second = stateId[it->second];
+			}
 			return node;
 		};
 
@@ -118,23 +120,25 @@ namespace compiler {
 		while (true) {
 			bool isUpdated = false; // 是否有更新过
 
-			for (int id : assignedId) {
+			for (const auto &elem : idStates) {
+				int id = elem.first;
 				// 生成后继集染色情况
 				map<DFAnode, set<int>> splitedStates;
-				for (int state : idStates[state]) {
-					splitedStates[dfa[state]].insert(state);
+				for (int state : idStates[id]) {
+					DFAnode nodeWithId = getNodeWithId(dfa[state]);
+					splitedStates[nodeWithId].insert(state);
 				}
 				// 后继集染色情况有差异
 				if (splitedStates.size() != 1) {
 					// 对后继集染色情况不同的集合进行差异染色
 					for (const auto &stateSet : splitedStates) {
-						for (int s : stateSet) {
-							idStates.erase({s, stateId[s]});
+						for (int s : stateSet.second) {
+							idStates[stateId[s]].erase(s);
 							stateId[s] = nextId;
-							idStates.insert({s, stateId[s]});
+							idStates[stateId[s]].insert(s);
 						}
-						assignedId.insert(nextId);
-						for (nextId; assignedId.count(nextId) != 0; nextId++);
+						idStates.erase(id);
+						for (nextId; idStates.count(nextId) != 0; nextId++) {}
 					}
 					isUpdated = true;
 				}
@@ -145,24 +149,24 @@ namespace compiler {
 			}
 		}
 		// 用等价集合编号代替原先元素
-		DFAgraph resDfa;
-		map<int, int> resFinality;
-
-		for (auto edge : dfa) {
-			int fromState = edge.first;
-			int toState = edge.second.second;
-			int symbol = edge.second.first;
-			// isStates[·]内都是等价状态,取第0个为代表
-			int fromState2 = idStates[stateId[fromState]][0];	
-			int toState2 = idStates[stateId[toState]][0]; 
-			
-			resDfa[fromState2][symbol] = toState2;
-			resFinality[fromState2] = finality[fromState];
-			resFinality[toState2] = finality[toState];
+		EdgeTable edgeTable = toEdgeTable(dfa);
+		for (auto it = edgeTable.begin(); it != edgeTable.end(); it++) {
+			int from2 = *idStates[stateId[it->from]].begin();	
+			int to2 = *idStates[stateId[it->to]].begin(); 
+			it->from = from2;
+			it->to = to2;
 		}
+
+		DFAgraph resDfa = toDFAgraph(edgeTable);
+		map<int, int> resFinality;
+		for (const auto &elem : finality) {
+			int state2 = *idStates[stateId[elem.first]].begin();	
+			resFinality[state2] = elem.second;
+		}
+
 		return make_pair(resDfa, resFinality);
 	}
-
+	
 	// 扩张覆盖片选择（epsilon-闭包法）
 	void setCoverExpanded(set<int> &cover, NFAgraph nfa)
 	{	
@@ -174,30 +178,34 @@ namespace compiler {
 		while (q.size()) {
 			int current = q.front();
 			q.pop();
-			for (int next : nfa[current][EMPTY_CHAR]) {
-				if (cover.count(next) == 0) {
-					cover.insert(next);
-					q.push(next);
+			for (const auto &edge : nfa[current]) {
+				if (edge.first == EMPTY_CHAR) {
+					cover.insert(edge.second);
+					q.push(edge.second);
 				}
 			}
 		}
 	}
 
 	// 求后继覆盖片
-	set<int> getNextCover(set<int> cover, NFAgraph nfa, int symbol)
+	map<int, set<int>> getNextCovers(set<int> cover, NFAgraph nfa)
 	{
-		set<int> nextCover;
+		map<int, set<int>> nextCovers;
 		for (int current : cover) {
-			for (int next : nfa[current][symbol]) {
-				nextCover.insert(next);
+			for (const auto &edge : nfa[current]) {
+				if (edge.first != EMPTY_CHAR) {
+					nextCovers[edge.first].insert(edge.second);
+				}
 			}
 		}
-		setCoverExpanded(nextCover, nfa);
-		return nextCover;
+		for (auto it = nextCovers.begin(); it != nextCovers.end(); it++) {
+			setCoverExpanded(it->second, nfa);
+		}
+		return nextCovers;
 	}
-
+	
 	// RE转NFA邻接表
-	EdgeTable re2nfa(const string &re, int &numStates)
+	NFAgraph re2nfa(const string &re, int &numStates)
 	{
 		numStates = 2;
 		EdgeTable edgeTable;
@@ -208,7 +216,7 @@ namespace compiler {
 
 		return toNFAgraph(edgeTable);
 	}
-
+	
 	// RE转NFA递归函数: 提取'|'并联
 	void splitReByMid(const string &re, int st, int ed, int &numStates, EdgeTable &edges, int stState, int edState)
 	{
@@ -351,9 +359,10 @@ namespace compiler {
 	pair<DFAgraph, map<int, int>> getDFAintegrated(vector<DFAgraph> dfas, vector<map<int, int>> dfaFinalities)
 	{
 		vector<EdgeTable> edgeTables;
-		for (DFAgraph dfa : dfas) {
-			dfa = getEmptyStatesEliminatedDfa(dfa);
-			edgeTables.push_back(toEdgeTable(dfa));
+		for (int i = 0; i < dfas.size(); i++) {
+			auto result = getEmptyStatesEliminatedDfa(dfas[i], dfaFinalities[i]);
+			edgeTables.push_back(toEdgeTable(result.first));
+			dfaFinalities[i] = result.second;
 		}
 
 		EdgeTable nfaEdgeTable;
@@ -383,7 +392,7 @@ namespace compiler {
 		NFAgraph nfa = toNFAgraph(nfaEdgeTable);
 		auto result = nfa2dfa(nfa, nfaFinality);
 		DFAgraph resDfa = result.first;
-		multiset<int, int> resCoverMap = result.second;
+		multimap<int, int> resCoverMap = result.second;
 		// 假设所得dfa的可结束状态无冲突
 		map<int, int> resDfaFinality;
 		for (const auto &elem : resCoverMap) {
@@ -392,7 +401,7 @@ namespace compiler {
 
 		return make_pair(resDfa, resDfaFinality);
 	}
-
+	
 	// 获取tokens
 	vector<Token> getTokens(DFAgraph dfa, map<int, int> finality, const string &src)
 	{
@@ -414,7 +423,7 @@ namespace compiler {
 					state = 0;
 					i--;
 				} else {
-					ERR_LOG("syntax error: unexpected char '%c'", c);
+					ERR_LOG("syntax error: unexpected char '%c'\n", c);
 				}
 			} else {
 				state = nextState;
@@ -427,7 +436,7 @@ namespace compiler {
 			string val = src.substr(st, (int)src.size() - st);
 			tokens.push_back({type, val});
 		} else {
-			ERR_LOG("syntax error: unexpected char '%c'", c);
+			ERR_LOG("syntax error: unexpected end\n");
 		}
 
 		return tokens;
