@@ -1,14 +1,14 @@
 #include <iostream>
-#include <fstream>
+#include <string>
 #include <map>
 using namespace std;
 
 int main()
 {
-	map<int, int> x({{1, 3}, {2, 3}, {3, 4}});
-	for (auto it = x.begin(); it != x.end(); it++) {
-		printf("%d", distance(it - x.begin());
-	}
+	pair<int, string> x = {4, "fuck"};
+	auto [a, b] = x;
+
+	printf("%d, %s", a, b.c_str());
 
 	return 0;
 }
