@@ -1,5 +1,4 @@
 #include "grammar.h"
-#include "nfa2dfa.h"
 #include <algorithm>
 #include <stack>
 using namespace std;

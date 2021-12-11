@@ -429,8 +429,9 @@ namespace compiler {
 		int state = 0;
 
 		for (int i = 0; i < src.size(); i++) {
+			// printf("i=%d: s%d, next=%c\n", i, state, src[i]);
 			int c = src[i];
-			int nextState = dfa[state][c];
+			int nextState = dfa[state].count(c) ? dfa[state][c] : ERROR_STATE;
 
 			if (nextState == ERROR_STATE) {
 				if (finality[state] != 0) {
@@ -438,6 +439,7 @@ namespace compiler {
 					int type = finality[state];
 					string val = src.substr(st, i - st);
 					tokens.push_back({type, val});
+					// printf("push token[%d, %s]\n", i, type, val.c_str());
 					st = i;
 					state = 0;
 					i--;

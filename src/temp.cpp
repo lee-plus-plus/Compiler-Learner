@@ -7,7 +7,7 @@ int main()
 {
 	map<int, int> x({{1, 3}, {2, 3}, {3, 4}});
 	for (auto it = x.begin(); it != x.end(); it++) {
-		printf("%d", it - x.begin());
+		printf("%d", distance(it - x.begin());
 	}
 
 	return 0;

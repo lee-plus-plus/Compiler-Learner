@@ -47,7 +47,7 @@ namespace compiler {
 	// 每个DFA均以0为起始状态，合并得到唯一起始状态
 	// 用不同值标注DFA的节点可终结属性, 可以防止合并
 	// 得到的DFA并非最小
-	pair<DFAgraph, map<int, int>> getDFAintegrated(vector<DFAgraph> dfas, vector<set<int>> dfaFinalities);
+	pair<DFAgraph, map<int, int>> getDFAintegrated(vector<DFAgraph> dfas, vector<map<int, int>> dfaFinalities);
 
 	// 输入字符串和dfa, 获取tokens
 	// 为简化问题，token中存放截取的字符串, 可供进一步处理
