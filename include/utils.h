@@ -41,10 +41,12 @@ namespace compiler {
 	void printDFA(DFA dfa);
 	void printNFA(NFA nfa);
 	
-	// void printProduction(Production production);
-	// void printProductionItem(ProductionItem prodItem);
-	// void printProductionLR1Item(ProductionLR1Item prodItem);
-	// void printProductions(vector<Production> productions);
+	void printFirstset(const map<int, set<int>> &firstSet);
+	void printProduction(const Production &prod);
+	void printProductionItem(const ProductionItem &prodItem);
+	void printProductionLR1Item(const ProductionLR1Item &prodItem);
+	void printGrammar(const Grammar &grammar);
+
 }
 
 

@@ -11,7 +11,7 @@ const char *symbolStr(int symbol)
 	} else if (isTerminal(symbol)) {
 		result += symbol;
 	} else {
-		result += T_BLUE;
+		result += T_LIGHT_BLUE;
 		result += toTerminal(symbol);
 		result += T_NONE;
 	}
@@ -78,10 +78,13 @@ int getNumStates(DFAgraph dfa)
 
 void printCover(set<int> cover)
 {
-	auto it = cover.begin();
-	printf("{s%d", *it);
-	for (it++; it != cover.end(); it++) {
-		printf(", s%d", *it);
+	printf("{");
+	if (cover.size() != 0) {
+		auto it = cover.begin();
+		printf("s%d", *it);
+		for (it++; it != cover.end(); it++) {
+			printf(", s%d", *it);
+		}
 	}
 	printf("}\n");
 }
@@ -165,62 +168,75 @@ void printNFA(NFA nfa)
 	}
 }
 
-/*
-// void printProduction(Production prod)
-// {	
-// 	printSymbol(prod.symbol);
-// 	printf(" -> ");
-// 	for (int i = 0; i < prod.right.size(); i++) {
-// 		printSymbol(prod.right[i]);
-// 	}
-// 	printf("\n");
-// }
+void printFirstset(const map<int, set<int>> &firstSet)
+{
+	for (auto [symbol, nextSymbols] : firstSet) {
+		if (isNonterminal(symbol)) {
+			printf("%s: {", symbolStr(symbol));
+			if (nextSymbols.size() != 0) {
+				auto it = nextSymbols.begin();
+				printf("%s", symbolStr(*it));
+				for (it++; it != nextSymbols.end(); it++) {
+					printf(", %s", symbolStr(*it));
+				}
+			}
+			printf("} \n");
+		}
+	}
+}
 
-// void printProductionItem(ProductionItem prodItem)
-// {	
-// 	printSymbol(prodItem.symbol);
-// 	printf(" -> ");
-// 	for (int i = 0; i < prodItem.right.size(); i++) {
-// 		if (i == prodItem.dot) {
-// 			printf("·");
-// 		}
-// 		printSymbol(prodItem.right[i]);
-// 	}
-// 	if (prodItem.dot == prodItem.right.size()) {
-// 		printf("·");
-// 	}
-// 	printf("\n");
-// }
+void printProduction(const Production &prod)
+{	
+	printf("%s", symbolStr(prod.symbol));
+	printf(" -> ");
+	for (int i = 0; i < prod.right.size(); i++) {
+		printf("%s", symbolStr(prod.right[i]));
+	}
+	printf("\n");
+}
 
-// void printProductionLR1Item(ProductionLR1Item prodItem)
-// {	
-// 	printSymbol(prodItem.symbol);
-// 	printf(" -> ");
-// 	for (int i = 0; i < prodItem.right.size(); i++) {
-// 		if (i == prodItem.dot) {
-// 			printf("·");
-// 		}
-// 		printSymbol(prodItem.right[i]);
-// 	}
-// 	if (prodItem.dot == prodItem.right.size()) {
-// 		printf("·");
-// 	}
-// 	printf(", ");
-// 	printSymbol(prodItem.search);
-// 	printf("\n");
-// }
+void printProductionItem(const ProductionItem &prodItem)
+{	
+	printf("%s", symbolStr(prodItem.symbol));
+	printf(" -> ");
+	for (int i = 0; i < prodItem.right.size(); i++) {
+		if (i == prodItem.dot) {
+			printf("·");
+		}
+		printf("%s", symbolStr(prodItem.right[i]));
+	}
+	if (prodItem.dot == prodItem.right.size()) {
+		printf("·");
+	}
+	printf("\n");
+}
 
+void printProductionLR1Item(const ProductionLR1Item &prodItem)
+{	
+	printf("%s", symbolStr(prodItem.symbol));
+	printf(" -> ");
+	for (int i = 0; i < prodItem.right.size(); i++) {
+		if (i == prodItem.dot) {
+			printf("·");
+		}
+		printf("%s", symbolStr(prodItem.right[i]));
+	}
+	if (prodItem.dot == prodItem.right.size()) {
+		printf("·");
+	}
+	printf(", ");
+	printf("%s", symbolStr(prodItem.search));
+	printf("\n");
+}
 
-// void printProductions(vector<Production> productions)
-// {
-// 	printf("prod:{\n");
-// 	int i = 0;
-// 	for (Production prod : productions) {
-// 		printf("\t(%d) ", i++);
-// 		printProduction(prod);
-// 	}
-// 	printf("}\n");
-// }
-*/
+void printGrammar(const Grammar &grammar)
+{
+	printf("Grammar: \n");
+	for (int i = 0; i < grammar.productions.size(); i++) {
+		printf("\t(%d) ", i);
+		printProduction(grammar.productions[i]);
+	}
+}
+
 
 } // namespace compiler

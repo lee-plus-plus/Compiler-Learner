@@ -12,7 +12,7 @@ set(SYNTAX_DEMO_SOURCES
 
 set(LEXICAL_DEMO_SOURCES
 	src/defs.cpp
-	src/grammar.cpp
+	src/utils.cpp
 	src/lexical.cpp
 	src/lexical_demo.cpp
 )

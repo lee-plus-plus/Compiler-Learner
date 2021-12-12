@@ -3,8 +3,6 @@ using namespace std;
 
 namespace compiler {
 
-	
-
 	bool Production::operator<(const Production &p) const {
 		return (
 			symbol < p.symbol || (symbol == p.symbol && (
@@ -35,9 +33,7 @@ namespace compiler {
 		return (
 			symbol < p.symbol || (symbol == p.symbol && (
 				right < p.right || (right == p.right && (
-					dot < p.dot || (dot == p.dot && (
-						search == p.search
-					))
+					dot < p.dot
 				))
 			))
 		);

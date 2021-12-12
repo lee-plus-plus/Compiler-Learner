@@ -52,6 +52,12 @@ struct Production {
 	bool operator==(const Production &p) const;
 };
 
+// 文法
+struct Grammar {
+	set<int> symbolset;
+	vector<Production> productions;
+};
+
 // 产生式项目 (P -> A·b)
 struct ProductionItem : Production {
 	int dot;			// position of dot (0 ~ right.size())
@@ -71,12 +77,17 @@ struct ProductionLR1Item : ProductionItem {
 
 };
 
+// LR1覆盖片
+typedef set<ProductionLR1Item> LR1Cover;
+
 // lr(1) 分析表动作
 struct Action {
 	enum TYPE {ACTION, REDUCE, GOTO, ACCEPT};
 	TYPE type;	// 动作类型
-	int tgt;	// ACTION or GOTO -> next_state; REDUCE -> prodution_idx
+	int tgt;	// ACTION or GOTO: tgt=next_state; REDUCE: tgt=prodution_idx
 };
+
+
 
 // 语法树节点
 struct GrammarNode {
@@ -84,22 +95,18 @@ struct GrammarNode {
 	int symbol;
 };
 
-inline int toNonterminal(int symbol)
-{
+inline int toNonterminal(int symbol) {
 	return isNonterminal(symbol) ? symbol : symbol + CHARSET_SIZE;
 }
-inline int toTerminal(int symbol)
-{
+inline int toTerminal(int symbol) {
 	return isTerminal(symbol) ? symbol : symbol - CHARSET_SIZE;
 }
 
-inline bool isTerminal(int symbol)
-{
+inline bool isTerminal(int symbol) {
 	return (0 <= symbol && symbol < CHARSET_SIZE);
 }
 
-inline bool isNonterminal(int symbol)
-{
+inline bool isNonterminal(int symbol) {
 	return (symbol >= CHARSET_SIZE);
 }
 
