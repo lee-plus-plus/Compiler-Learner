@@ -24,7 +24,7 @@
 namespace compiler {
 
 	// 符号转字符串
-	const char *symbolStr(int symbol);
+	string symbolStr(int symbol);
 
 	// 邻接表转NFA分析表
 	NFAgraph toNFAgraph(EdgeTable edgeTable);
@@ -36,6 +36,8 @@ namespace compiler {
 	// 获取状态数量
 	int getNumStates(DFAgraph dfa);
 
+	Grammar getGrammarFromStr(vector<string> prodStrs);
+
 	void printCover(set<int> cover);
 	void printEdgeTable(EdgeTable edgeTable);
 	void printDFA(DFA dfa);
@@ -46,6 +48,7 @@ namespace compiler {
 	void printProductionItem(const ProductionItem &prodItem);
 	void printProductionLR1Item(const ProductionLR1Item &prodItem);
 	void printGrammar(const Grammar &grammar);
+	void printGrammarTree(GrammarNode *root);
 
 }
 

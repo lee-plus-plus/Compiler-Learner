@@ -88,92 +88,11 @@ map<int, set<int>> getFollowSet(Grammar grammar, map<int, set<int>> firstSet) {
 	return followSet;
 }
 
-// lr(0)分析
-// pair<vector<set<ProductionItem>>, EdgeTable> getLR0dfa(
-// 		set<int> symbolset, 
-// 		vector<Production> prods) {
-// 	vector<set<ProductionItem>> covers;
-// 	EdgeTable edgeTable;
-
-// 	set<ProductionItem> initCover;
-// 	initCover.insert({prods[0].symbol, prods[0].right, 0});
-// 	setLR0CoverExpanded(initCover, prods);
-// 	covers.push_back(initCover);
-
-// 	for (int i = 0; i < covers.size(); i++) {
-// 		map<int, set<ProductionItem>> nextCovers;
-
-// 		for (ProductionItem prodItem : covers[i]) {
-// 			// A -> α·Bβ ==B=> A -> αB·β
-// 			if (prodItem.dot < prodItem.right.size()) {
-// 				int c = prodItem.right[prodItem.dot];
-// 				if (nextCovers.count(c) == 0) {
-// 					nextCovers[c] = {};
-// 				}
-// 				nextCovers[c].insert({
-// 					prodItem.symbol, prodItem.right, prodItem.dot + 1
-// 				});
-// 			}
-// 		}
-
-// 		for (auto elem : nextCovers) {
-// 			set<ProductionItem> nextCover = elem.second;
-// 			setLR0CoverExpanded(nextCover, prods);
-
-// 			bool isUnique = true;
-// 			int tgtIdx = -1;
-// 			for (int j = 0; j < covers.size(); j++) {
-// 				if (nextCover == covers[j]) {
-// 					isUnique = false;
-// 					tgtIdx = j;
-// 					break;
-// 				}
-// 			}
-
-// 			if (isUnique) {
-// 				// printf("[%d,%d,%d]", elem.first, i, (int)covers.size() - 1);
-// 				covers.push_back(nextCover);
-// 				edgeTable.push_back({elem.first, i, (int)covers.size() - 1});
-// 			} else {
-// 				// printf("[%d,%d,%d]", elem.first, i, tgtIdx);
-// 				edgeTable.push_back({elem.first, i, tgtIdx});
-// 			}
-// 		}
-// 	}
-
-// 	return pair<vector<set<ProductionItem>>, EdgeTable>(covers, edgeTable);
-// }
-
-// 扩张覆盖片选择（epsilon-闭包法）
-// void setLR0CoverExpanded(set<ProductionItem> &cover, vector<Production> prods) {
-// 	queue<ProductionItem> q;
-// 	for (ProductionItem prodItem : cover) {
-// 		q.push(prodItem);
-// 	}
-// 	while (q.size()) {
-// 		ProductionItem prodItem = q.front();
-// 		q.pop();
-
-// 		if (prodItem.dot == prodItem.right.size()) {
-// 			continue;
-// 		}
-// 		// A -> α·Bβ, B -> ... ==ε=> cover += (B -> ·...)
-// 		for (Production prod : prods) {
-// 			if (prod.symbol == prodItem.right[prodItem.dot]) {
-// 				ProductionItem nextProdItem({prod.symbol, prod.right, 0});
-// 				if (cover.count(nextProdItem) == 0) {
-// 					cover.insert(nextProdItem);
-// 					q.push(nextProdItem);
-// 				}
-// 			}
-// 		}
-// 	}
-// }
-
 // lr(1)分析
 // 输入文法, 返回DFA和DFA节点所表示的lr(1)产生式项目
 pair<vector<LR1Cover>, EdgeTable> getLR1dfa(Grammar grammar) {
-	map<int, set<int>> firstSet = getFirstSet(grammar);
+	auto firstSet = getFirstSet(grammar);
+	// auto followSet = getFollowSet(grammar, firstSet);
 	// generate covers
 	vector<LR1Cover> covers;
 	LR1Cover initCover = {{
@@ -187,16 +106,17 @@ pair<vector<LR1Cover>, EdgeTable> getLR1dfa(Grammar grammar) {
 	// bfs, generate follow covers
 	EdgeTable edgeTable;
 	for (int i = 0; i < covers.size(); i++) { 
-		// print
-		printf("%d: \n", i);
-		for (ProductionLR1Item p : covers[i]) {
-			printProductionLR1Item(p);
-		}
-		printf("\n");
+		// // print
+		// printf("%d: \n", i);
+		// for (ProductionLR1Item p : covers[i]) {
+		// 	printProductionLR1Item(p);
+		// }
+		// printf("\n");
 
 		map<int, LR1Cover> nextCovers;
 		for (ProductionLR1Item prodItem : covers[i]) {
-			// (A -> α·Bβ, s) ==> B ==> (A -> αB·β, s)
+			// current cover: (A -> α·Bβ, s) 
+			// B => next cover: (A -> αB·β, s)
 			if (prodItem.dot < prodItem.right.size()) {
 				int c = prodItem.right[prodItem.dot];
 				if (nextCovers.count(c) == 0) {
@@ -228,7 +148,7 @@ pair<vector<LR1Cover>, EdgeTable> getLR1dfa(Grammar grammar) {
 	return make_pair(covers, edgeTable);
 }
 
-// 扩张覆盖片选择（epsilon-闭包法）
+// 扩张LR(1)覆盖片选择（epsilon-闭包法）
 void setLR1CoverExpanded(LR1Cover &cover, map<int, set<int>> firstSet, 
 						 vector<Production> prods) {
 	queue<ProductionLR1Item> q;
@@ -246,14 +166,12 @@ void setLR1CoverExpanded(LR1Cover &cover, map<int, set<int>> firstSet,
 		}
 		
 		// (A -> α·B..., s), check productions with right started by B
-		int B = prodItem.right[prodItem.dot];
-		for (Production prod : prods) {
-			if (prod.symbol != B) {
-				continue;
-			}
-			if (prodItem.dot + 1 < prodItem.right.size()) {
-				// (A -> α·Bβ, s)
-				// => cover += (B -> ·..., first(β))
+		if (prodItem.dot + 1 < prodItem.right.size()) {
+			// (A -> α·Bβ, s) => cover += (B -> ·..., follow(β))
+			for (Production prod : prods) {
+				if (prod.symbol != prodItem.right[prodItem.dot]) {
+					continue;
+				}
 				set<int> nextSet = firstSet[prodItem.right[prodItem.dot + 1]];
 				for (int c : nextSet) {
 					ProductionLR1Item nextProdItem({
@@ -264,9 +182,13 @@ void setLR1CoverExpanded(LR1Cover &cover, map<int, set<int>> firstSet,
 						q.push(nextProdItem);
 					}
 				}
-			} else {
-				// (A -> α·B, s)
-				// => cover += (B -> ·..., s)
+			}
+		} else {
+			// (A -> α·B, s) => cover += (B -> ·..., s)
+			for (Production prod : prods) {
+				if (prod.symbol != prodItem.right[prodItem.dot]) {
+					continue;
+				}
 				ProductionLR1Item nextProdItem({
 					prod.symbol, prod.right, 0, prodItem.search
 				});
@@ -334,20 +256,20 @@ GrammarNode *getLR1grammarTree(vector<Production> prods,
 
 	for (int i = 0, flag = true; flag; ) {
 		// print stack
-		{
-			stack<int> tempSymbols;
-			printf("s=%d \tnext=%c \t", states.top(), src[i]);
-			while (symbols.size()) {
-				tempSymbols.push(symbols.top());
-				symbols.pop();
-			}
-			while (tempSymbols.size()) {
-				symbols.push(tempSymbols.top());
-				// printSymbol(tempSymbols.top());
-				tempSymbols.pop();
-			}
-			printf("\n");
-		}
+		// {
+		// 	stack<int> tempSymbols;
+		// 	printf("s=%d \tnext=%c \t", states.top(), src[i]);
+		// 	while (symbols.size()) {
+		// 		tempSymbols.push(symbols.top());
+		// 		symbols.pop();
+		// 	}
+		// 	while (tempSymbols.size()) {
+		// 		symbols.push(tempSymbols.top());
+		// 		// printSymbol(tempSymbols.top());
+		// 		tempSymbols.pop();
+		// 	}
+		// 	printf("\n");
+		// }
 
 		// look src[i], state => next_state, action
 		bool isError =  analyzeTable.count({states.top(), src[i]}) == 0;

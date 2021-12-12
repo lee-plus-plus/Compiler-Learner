@@ -24,7 +24,7 @@ map<int, set<int>> getFollowSet(Grammar grammar, map<int, set<int>> firstSet);
 // 输入非终结符集合和CFG文法, 返回nfa(lr(0)覆盖片映射和nfa邻接表)
 pair<vector<LR1Cover>, EdgeTable> getLR1dfa(Grammar grammar);
 
-void setLR1CoverExpanded(LR1Cover &cover, map<int, set<int>> firstSet, 
+void setLR1CoverExpanded(LR1Cover &cover, map<int, set<int>> followSet, 
 						 vector<Production> prods);
 
 // pair<vector<Production>, map<int, int>> getLeftRecursiveReducedGrammar();
