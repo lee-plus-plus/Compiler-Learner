@@ -143,12 +143,32 @@ void testSyntaxAnalyze()
 	// printf("\n");
 }
 
+void reInteractiveTest()
+{
+	string re;
+	cin >> re;
+	
+	printf("RE: %s\n", re.c_str());
+
+	DFA dfa = getMinimizedDfa(getDFAfromNFA(getNFAfromRE(re)));
+	printDFA(dfa);
+
+	string src;
+	cin >> src;
+
+	vector<Token> tokens = getTokens(dfa, src);
+	for (const Token &token : tokens) {
+		printf("[type: %d, val: '%s']\n", token.type, token.val.c_str());
+	}
+}
+
 int main(int argc, char **argv)
 {
-	testDFAminimized();
-	testNFAtoDFA();
-	testREtoDFA();
-	testSyntaxAnalyze();
+	// testDFAminimized();
+	// testNFAtoDFA();
+	// testREtoDFA();
+	// testSyntaxAnalyze();
+	reInteractiveTest();
 	
 	return 0;
 }

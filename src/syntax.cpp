@@ -247,11 +247,12 @@ namespace compiler {
 
 		return NFA({toNFAgraph(edgeTable), finality});
 	}
-	
+
 	// RE转NFA递归函数: 提取'|'并联
 	void splitReByMid(const string &re, int st, int ed, int &numStates, 
 					  EdgeTable &edges, int stState, int edState)
 	{
+		// fprintf(stderr, "bymid: \t%s\n", re.substr(st, ed - st).c_str());
 		int parenLevel = 0;
 		int midPos = st - 1;
 		for (int i = st; i < ed; i++) {
@@ -286,6 +287,7 @@ namespace compiler {
 			}
 		}
 		if (parenLevel != 0) {
+			// ERR_LOG("%d", parenLevel);
 			ERR_LOG("syntax error: unmatched parenthesis '('");
 		}
 		splitReByParen(
@@ -298,6 +300,7 @@ namespace compiler {
 	void splitReByParen(const string &re, int st, int ed, int &numStates, 
 						EdgeTable &edges, int stState, int edState)
 	{
+		// fprintf(stderr, "paren: \t%s\n", re.substr(st, ed - st).c_str());
 		int parenLevel = 0;
 		int lparenPos = -1;
 		int lparenState = stState;
@@ -319,6 +322,7 @@ namespace compiler {
 					
 					if (parenLevel == 0) {
 						if (i + 1 < ed && re[i + 1] == '*') {
+
 							splitReByMid(
 								re, lparenPos + 1, i, 
 								numStates, edges, stState, stState
@@ -350,16 +354,22 @@ namespace compiler {
 					assert(parenLevel > 0);
 					break;
 				case '*': 
-					ERR_LOG("syntax error: mismatched '*'");
+					if (parenLevel == 0) {
+						ERR_LOG("syntax error: mismatched '*'");
+					}
 					break;
 				case '+':
-					ERR_LOG("syntax error: mismatched '+'");
+					if (parenLevel == 0) {
+						ERR_LOG("syntax error: mismatched '+'");
+					}
 					break;
 				case '\\':
-					if (i + 1 >= ed) {
-						ERR_LOG("syntax error: separate escape character '\\'");
+					if (parenLevel == 0) {
+						if (i + 1 >= ed) {
+							ERR_LOG("syntax error: separate escape character '\\'");
+						}
+						i++;
 					}
-					i++;
 					// no break
 				default:
 					if (parenLevel == 0) {
