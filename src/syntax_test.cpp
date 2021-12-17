@@ -13,7 +13,7 @@ vector<Token> getTokensWithDebug(DFA dfa, const string &src) {
 	int state = 0;
 
 	for (int i = 0; i < src.size(); i++) {
-		printf("\n");
+		// printf("\n");
 		cout << src << endl;
 		for (int j = 0; j < st; j++) {
 			printf(" ");
@@ -25,7 +25,8 @@ vector<Token> getTokensWithDebug(DFA dfa, const string &src) {
 		if (st != i) {
 			printf(T_LIGHT_CYAN "^" T_NONE);
 		}
-		printf("\nstate: s%d, next: '%c'\n", state, src[i]);
+		printf("\n");
+		// printf("state: s%d, next: '%c'\n", state, src[i]);
 
 		int c = src[i];
 		int nextState = dfa.graph[state].count(c) ? 
@@ -44,7 +45,7 @@ vector<Token> getTokensWithDebug(DFA dfa, const string &src) {
 				state = 0;
 				i--;
 			} else {
-				ERR_LOG("syntax error: unexpected char '%c'\n", c);
+				ERR_LOG("syntax error: unexpected char '%c' at column %d\n", c, i);
 			}
 		} else {
 			state = nextState;

@@ -9,11 +9,11 @@ namespace compiler {
 // 求首符集
 map<int, set<int>> getFirstSet(Grammar grammar) {
 	map<int, set<int>> firstSet;
-	// follow(a) = {a}
+	// first(a) = {a}
 	for (int c = 0; c < CHARSET_SIZE; c++) {
 		firstSet[c] = {c};
 	}
-	// follow(A) = {}
+	// first(A) = {}
 	for (int symbol : grammar.symbolset) {
 		firstSet[symbol] = {};
 	}
@@ -29,28 +29,42 @@ map<int, set<int>> getFirstSet(Grammar grammar) {
 		}
 	}
 
-	for (Production prod : grammar.productions) {
-		// prod: X -> ... (not empty)
-		if (prod.right.size() == 0) {
-			continue;
-		}
-		for (int i = 0; i < prod.right.size(); i++) {
-			// prod: X -> Y0 Y1...Yi γ, epsilon ∈ first(Y0),...,first(Yi)
-			// ==> first(X) += first(γ)
-			int y = prod.right[i];
-			set<int> tempSet = firstSet[y];
-			tempSet.erase(EMPTY_CHAR);
-			firstSet[prod.symbol].insert(tempSet.begin(), tempSet.end());
+	while (true) {
+		bool isChanged = false;
+		for (Production prod : grammar.productions) {
+			// prod: X -> ... (not empty)
+			if (prod.right.size() == 0) {
+				continue;
+			}
+			for (int i = 0; i < prod.right.size(); i++) {
+				// prod: X -> Y0 Y1...Yi γ, epsilon ∈ first(Y0),...,first(Yi)
+				// ==> first(X) += first(γ)
+				int y = prod.right[i];
+				set<int> tempSet = firstSet[y];
+				tempSet.erase(EMPTY_CHAR);
+				for (int elem : tempSet) {
+					if (firstSet[prod.symbol].count(elem) == 0) {
+						isChanged = true;
+						firstSet[prod.symbol].insert(elem);
+					}
+				}
 
-			if (firstSet[y].count(EMPTY_CHAR) == 0) {
-				break;
-			} else {
-				// prod: X -> Y0 Y1...Yi, epsilon ∈ first(Y0),...,first(Yi)
-				// ==> first(X) += {epsilon}
-				if (i == prod.right.size() - 1) {
-					firstSet[prod.symbol].insert(EMPTY_CHAR);
+				if (firstSet[y].count(EMPTY_CHAR) == 0) {
+					break;
+				} else {
+					// prod: X -> Y0 Y1...Yi, epsilon ∈ first(Y0),...,first(Yi)
+					// ==> first(X) += {epsilon}
+					if (i == prod.right.size() - 1) {
+						if (firstSet[prod.symbol].count(EMPTY_CHAR) == 0) {
+							isChanged = true;
+							firstSet[prod.symbol].insert(EMPTY_CHAR);
+						}
+					}
 				}
 			}
+		}
+		if (isChanged == false) {
+			break;
 		}
 	}
 
@@ -63,25 +77,40 @@ map<int, set<int>> getFollowSet(Grammar grammar, map<int, set<int>> firstSet) {
 	// init prod: S -> ... ==> follow(S) += {#}
 	followSet[grammar.productions[0].symbol].insert(END_CHAR);
 	
-	for (Production prod : grammar.productions) {
-		// prod: B -> ...
-		for (int i = 0; i < prod.right.size(); i++) {
-			if (grammar.symbolset.count(prod.right[i])) {
-				if (i != prod.right.size() - 1) {
-					// B -> αAβ ==> follow(A) += {first(β) - epsilon}
-					int A = prod.right[i];
-					int b = prod.right[i + 1];
-					set<int> tempSet = firstSet[b];
-					tempSet.erase(EMPTY_CHAR);
-					followSet[A].insert(tempSet.begin(), tempSet.end());
-				} else {
-					// B -> αA ==> follow(A) += {follow(B)}
-					int A = prod.right[i];
-					int B = prod.symbol;
-					followSet[A].insert(
-						followSet[B].begin(), followSet[B].end());
+	while (true) {
+		bool isChanged = false;
+		for (Production prod : grammar.productions) {
+			// prod: B -> ...
+			for (int i = 0; i < prod.right.size(); i++) {
+				if (grammar.symbolset.count(prod.right[i])) {
+					if (i != prod.right.size() - 1) {
+						// B -> αAβ ==> follow(A) += {first(β) - epsilon}
+						int A = prod.right[i];
+						int b = prod.right[i + 1];
+						set<int> tempSet = firstSet[b];
+						tempSet.erase(EMPTY_CHAR);
+						for (int elem : tempSet) {
+							if (followSet[A].count(elem) == 0) {
+								isChanged = true;
+								followSet[A].insert(elem);
+							}
+						}
+					} else {
+						// B -> αA ==> follow(A) += {follow(B)}
+						int A = prod.right[i];
+						int B = prod.symbol;
+						for (int elem : followSet[B]) {
+							if (followSet[A].count(elem) == 0) {
+								isChanged = true;
+								followSet[A].insert(elem);
+							}
+						}
+					}
 				}
 			}
+		}
+		if (isChanged == false) {
+			break;
 		}
 	}
 
@@ -167,12 +196,13 @@ void setLR1CoverExpanded(LR1Cover &cover, map<int, set<int>> firstSet,
 		
 		// (A -> α·B..., s), check productions with right started by B
 		if (prodItem.dot + 1 < prodItem.right.size()) {
-			// (A -> α·Bβ, s) => cover += (B -> ·..., follow(β))
+			// (A -> α·Bβ, s) => cover += (B -> ·..., first(β))
 			for (Production prod : prods) {
 				if (prod.symbol != prodItem.right[prodItem.dot]) {
 					continue;
 				}
-				set<int> nextSet = firstSet[prodItem.right[prodItem.dot + 1]];
+
+				set<int> nextSet = firstSet[prodItem.right[prodItem.dot + 1]];	
 				for (int c : nextSet) {
 					ProductionLR1Item nextProdItem({
 						prod.symbol, prod.right, 0, c
@@ -255,26 +285,29 @@ GrammarNode *getLR1grammarTree(vector<Production> prods,
 
 
 	for (int i = 0, flag = true; flag; ) {
-		// print stack
-		// {
-		// 	stack<int> tempSymbols;
-		// 	printf("s=%d \tnext=%c \t", states.top(), src[i]);
-		// 	while (symbols.size()) {
-		// 		tempSymbols.push(symbols.top());
-		// 		symbols.pop();
-		// 	}
-		// 	while (tempSymbols.size()) {
-		// 		symbols.push(tempSymbols.top());
-		// 		// printSymbol(tempSymbols.top());
-		// 		tempSymbols.pop();
-		// 	}
-		// 	printf("\n");
-		// }
+		{
+			auto printStack = [](stack<int> s) -> void {
+				stack<int> temp;
+				while (s.size()) {
+					temp.push(s.top());
+					s.pop();
+				}
+				while (temp.size()) {
+					s.push(temp.top());
+					fprintf(stderr, "%d", temp.top());
+					temp.pop();
+				}
+			};
+
+			fprintf(stderr, "s=%d \tnext=%c\tstack=", states.top(), src[i]);
+			printStack(states);
+			fprintf(stderr, "\n");
+		}
 
 		// look src[i], state => next_state, action
 		bool isError =  analyzeTable.count({states.top(), src[i]}) == 0;
 		if (isError) {
-			ERR_LOG("syntax error: unexpected symbol '%c'\n", src[i]);
+			ERR_LOG("syntax error: unexpected symbol '%c' at column %d\n", src[i], i);
 		}
 
 		Action action = analyzeTable[{states.top(), src[i]}];
@@ -299,8 +332,8 @@ GrammarNode *getLR1grammarTree(vector<Production> prods,
 				bool isError2 =  analyzeTable.count({states.top(), r.symbol}) == 0;
 				if (isError2) {
 					ERR_LOG(
-						"syntax error: unexpected symbol '\e[0;36m%c\e[0m'\n", 
-						r.symbol - CHARSET_SIZE
+						"syntax error: unexpected symbol '\e[0;36m%c\e[0m' at column %d\n", 
+						r.symbol - CHARSET_SIZE, i
 					);
 				}
 				Action action2 = analyzeTable[{states.top(), r.symbol}];
@@ -320,7 +353,7 @@ GrammarNode *getLR1grammarTree(vector<Production> prods,
 				break;
 			}
 			default: {
-				ERR_LOG("syntax error: unexpected symbol '%c'\n", src[i]);
+				ERR_LOG("syntax error: unexpected symbol '%c' at column %d\n", src[i], i);
 				break;
 			}
 		}				

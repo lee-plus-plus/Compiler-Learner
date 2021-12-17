@@ -13,11 +13,12 @@ void testFirstSetAndFollowSet()
 	// initialize symbolset and grammar
 	Grammar grammar = getGrammarFromStr({
 		"Q -> S", 
-		"S -> L=R", 
+		"S -> V=R", 
 		"S -> R", 
+		"R -> L", 
 		"L -> *R", 
 		"L -> i", 
-		"R -> L", 
+		"V -> a", 
 	});
 	printf("> initial grammar: \n");
 	printGrammar(grammar);

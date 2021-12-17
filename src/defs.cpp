@@ -33,7 +33,9 @@ namespace compiler {
 		return (
 			symbol < p.symbol || (symbol == p.symbol && (
 				right < p.right || (right == p.right && (
-					dot < p.dot
+					dot < p.dot || (dot == p.dot && (
+						search < p.search
+					))
 				))
 			))
 		);
