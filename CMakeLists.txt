@@ -17,13 +17,31 @@ set(LEXICAL_DEMO_SOURCES
 	src/lexical_demo.cpp
 )
 
+set(SYNTAX_TEST_SOURCES
+	src/defs.cpp
+	src/utils.cpp
+	src/syntax.cpp
+	src/lexical.cpp
+	src/syntax_test.cpp
+)
+
+set(LEXICAL_TEST_SOURCES
+	src/defs.cpp
+	src/utils.cpp
+	src/syntax.cpp
+	src/lexical.cpp
+	src/lexical_test.cpp
+)
+
+
 include_directories(include)
 add_executable(syntax_demo ${SYNTAX_DEMO_SOURCES})
 
 include_directories(include)
 add_executable(lexical_demo ${LEXICAL_DEMO_SOURCES})
 
-# target_include_directories(main
-#     PRIVATE
-#         ${PROJECT_SOURCE_DIR}/include
-# )
+include_directories(include)
+add_executable(syntax_test ${SYNTAX_TEST_SOURCES})
+
+include_directories(include)
+add_executable(lexical_test ${LEXICAL_TEST_SOURCES})

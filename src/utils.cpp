@@ -2,6 +2,10 @@
 using namespace std;
 
 namespace compiler {
+	
+void rtrim(string &str) {
+	str.erase(str.find_last_not_of("\n") + 1); 
+}
 
 string symbolStr(int symbol) {
 	string result;
@@ -250,7 +254,7 @@ void printProductionLR1Item(const ProductionLR1Item &prodItem) {
 void printGrammar(const Grammar &grammar) {
 	printf("Grammar: \n");
 	for (int i = 0; i < grammar.productions.size(); i++) {
-		printf("(%d) ", i);
+		printf("(%d) ", i + 1);
 		printProduction(grammar.productions[i]);
 	}
 }
@@ -280,6 +284,22 @@ void printGrammarTreeNode(GrammarNode *node, vector<bool> isLast = {}) {
 void printGrammarTree(GrammarNode *root) {
 	printf("Grammar Tree: \n");
 	printGrammarTreeNode(root, {});
+}
+
+void printAnalysisTable(const map<pair<int, int>, Action> &analyzeTable) {
+	printf("Analysis Table: \n");
+	string typeName[] = {"ACTION", "REDUCE", "GOTO  ", "ACCEPT"};
+	for (auto [key, action] : analyzeTable) {
+		printf("s%d --> %s --> ", key.first, symbolStr(key.second).c_str());
+		printf("%s ", typeName[action.type].c_str());
+		if (action.type == Action::ACTION || 
+			action.type == Action::GOTO) {
+			printf("s%d", action.tgt);
+		} else if (action.type == Action::REDUCE) {
+			printf("r%d", action.tgt);
+		}
+		printf("\n");
+	}
 }
 
 } // namespace compiler

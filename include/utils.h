@@ -23,6 +23,8 @@
 
 namespace compiler {
 
+	void rtrim(string &str);
+
 	// 符号转字符串
 	string symbolStr(int symbol);
 
@@ -49,7 +51,7 @@ namespace compiler {
 	void printProductionLR1Item(const ProductionLR1Item &prodItem);
 	void printGrammar(const Grammar &grammar);
 	void printGrammarTree(GrammarNode *root);
-
+	void printAnalysisTable(const map<pair<int, int>, Action> &analyzeTable);
 }
 
 
